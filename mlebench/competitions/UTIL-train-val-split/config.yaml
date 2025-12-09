@@ -1,0 +1,17 @@
+id: UTIL-train-val-split
+name: UTIL Train–Validation Split Task
+competition_type: tool-task
+description: mlebench/competitions/UTIL-train-val-split/description.md
+
+dataset:
+  # answers = where raw.csv will end up under the data_dir
+  answers: UTIL-train-val-split/raw/raw.csv
+  # sample_submission = what dummy agent expects; follows same pattern as other comps
+  sample_submission: UTIL-train-val-split/prepared/public/sample_submission.csv
+
+grader:
+  name: split_score
+  grade_fn: mlebench.competitions.UTIL-train-val-split.grade:grade
+
+preparer:
+  mlebench.competitions.UTIL-train-val-split.prepare:prepare

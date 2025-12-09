@@ -11,6 +11,7 @@ from typing import Any, Callable, Optional
 import diskcache as dc
 import pandas as pd
 import yaml
+from mlebench.runner import run_tools_for_competition
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_fixed
 from tqdm.auto import tqdm
 
@@ -108,6 +109,8 @@ def download_and_prepare_dataset(
 
     with open(competition.public_dir / "description.md", "w") as f:
         f.write(competition.description)
+
+    run_tools_for_competition(competition)
 
     if overwrite_checksums or not skip_verification:
         logger.info(f"Generating checksums for files in `{competition_dir}`...")

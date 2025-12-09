@@ -1,7 +1,6 @@
 import argparse
 import json
 from pathlib import Path
-getatt
 from mlebench.data import download_and_prepare_dataset, ensure_leaderboard_exists
 from mlebench.grade import grade_csv, grade_jsonl
 from mlebench.registry import registry
@@ -202,7 +201,7 @@ def main():
 
         # 2. If --tools is set, intersect with tools.txt
         if getattr(args, "tools", False):
-            tools_ids = _load_tools_ids()
+            tools_ids = set(_load_tools_ids())
             base_ids = base_ids & tools_ids
             if not base_ids:
                 parser_prepare.error(
