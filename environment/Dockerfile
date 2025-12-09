@@ -2,6 +2,7 @@ FROM ubuntu:20.04
 
 # Avoid interactive dialog from apt-get and other packages requiring configuration
 ENV DEBIAN_FRONTEND=noninteractive
+ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=true
 
 # install basic packages
 RUN apt-get update && apt-get install -y \
@@ -43,7 +44,7 @@ COPY environment/requirements.txt ${REQUIREMENTS}
 
 # create conda environment and optionally install the requirements to it
 RUN /opt/conda/bin/conda create -n ${CONDA_ENV_NAME} python=${PYTHON_VERSION} -y
-ARG INSTALL_HEAVY_DEPENDENCIES=true
+ARG INSTALL_HEAVY_DEPENDENCIES=false
 ENV INSTALL_HEAVY_DEPENDENCIES=${INSTALL_HEAVY_DEPENDENCIES}
 
 # The rest of your Dockerfile
@@ -81,6 +82,8 @@ COPY environment/entrypoint.sh /entrypoint.sh
 RUN useradd -m nonroot \
     && mkdir /home/submission \
     && chmod +x /entrypoint.sh
+
+
 
 WORKDIR /home
 

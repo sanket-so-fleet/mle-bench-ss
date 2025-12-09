@@ -1,13 +1,27 @@
 import argparse
 import json
 from pathlib import Path
-
+getatt
 from mlebench.data import download_and_prepare_dataset, ensure_leaderboard_exists
 from mlebench.grade import grade_csv, grade_jsonl
 from mlebench.registry import registry
-from mlebench.utils import get_logger
+from mlebench.utils import get_logger, read_jsonl
 
 logger = get_logger(__name__)
+
+# New: path to tools split file
+TOOLS_SPLIT_PATH = Path("experiments/splits/tools.txt")
+
+
+def _load_tools_ids() -> list[str]:
+    if not TOOLS_SPLIT_PATH.exists():
+        raise FileNotFoundError(f"tools split file not found at {TOOLS_SPLIT_PATH}")
+    with TOOLS_SPLIT_PATH.open() as f:
+        return [
+            line.strip()
+            for line in f
+            if line.strip() and not line.strip().startswith("#")
+        ]
 
 
 def main():
@@ -35,6 +49,13 @@ def main():
     parser_prepare.add_argument(
         "--lite",
         help="Prepare all the low complexity competitions (MLE-bench Lite).",
+        action="store_true",
+        required=False,
+    )
+    # New: tools flag
+    parser_prepare.add_argument(
+        "--tools",
+        help="Prepare all competitions listed in experiments/splits/tools.txt.",
         action="store_true",
         required=False,
     )
@@ -103,6 +124,13 @@ def main():
         required=False,
         default=registry.get_data_dir(),
     )
+    # New: tools flag for grade
+    parser_grade_eval.add_argument(
+        "--tools",
+        help="Only grade competitions listed in experiments/splits/tools.txt.",
+        action="store_true",
+        required=False,
+    )
 
     # Grade sample sub-parser
     parser_grade_sample = subparsers.add_parser(
@@ -154,32 +182,37 @@ def main():
     )
 
     args = parser.parse_args()
-
     if args.command == "prepare":
         new_registry = registry.set_data_dir(Path(args.data_dir))
 
+        # 1. Base competitions
         if args.lite:
-            competitions = [
-                new_registry.get_competition(competition_id)
-                for competition_id in new_registry.get_lite_competition_ids()
-            ]
+            base_ids = set(new_registry.get_lite_competition_ids())
         elif args.all:
-            competitions = [
-                new_registry.get_competition(competition_id)
-                for competition_id in registry.list_competition_ids()
-            ]
+            base_ids = set(registry.list_competition_ids())
         elif args.list:
             with open(args.list, "r") as f:
-                competition_ids = f.read().splitlines()
-            competitions = [
-                new_registry.get_competition(competition_id) for competition_id in competition_ids
-            ]
+                base_ids = {line.strip() for line in f if line.strip()}
         else:
             if not args.competition_id:
                 parser_prepare.error(
                     "One of --lite, --all, --list, or --competition-id must be specified."
                 )
-            competitions = [new_registry.get_competition(args.competition_id)]
+            base_ids = {args.competition_id}
+
+        # 2. If --tools is set, intersect with tools.txt
+        if getattr(args, "tools", False):
+            tools_ids = _load_tools_ids()
+            base_ids = base_ids & tools_ids
+            if not base_ids:
+                parser_prepare.error(
+                    "No competitions in the selected set are marked as tools in tools.txt"
+                )
+
+        competition_ids = sorted(base_ids)
+        competitions = [
+            new_registry.get_competition(cid) for cid in competition_ids
+        ]
 
         for competition in competitions:
             download_and_prepare_dataset(
@@ -189,11 +222,51 @@ def main():
                 overwrite_leaderboard=args.overwrite_leaderboard,
                 skip_verification=args.skip_verification,
             )
+        
+
     if args.command == "grade":
         new_registry = registry.set_data_dir(Path(args.data_dir))
         submission = Path(args.submission)
         output_dir = Path(args.output_dir)
-        grade_jsonl(submission, output_dir, new_registry)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. Load all submissions once
+        all_submissions = list(
+            read_jsonl(submission, skip_commented_out_lines=True)
+        )
+
+        # 2. Base competition_ids = whatever appears in the JSONL
+        base_ids = {
+            s.get("competition_id")
+            for s in all_submissions
+            if s.get("competition_id") is not None
+        }
+
+        # 3. If --tools, intersect with tools.txt
+        if getattr(args, "tools", False):
+            tools_ids = _load_tools_ids()
+            target_ids = base_ids & tools_ids
+            if not target_ids:
+                parser_grade_eval.error(
+                    "No competitions in the submission are marked as tools in tools.txt"
+                )
+            filtered = [
+                s for s in all_submissions
+                if s.get("competition_id") in target_ids
+            ]
+
+            # write filtered JSONL and grade that
+            tmp = output_dir / "tools_only_submissions.jsonl"
+            with tmp.open("w") as f:
+                for row in filtered:
+                    f.write(json.dumps(row) + "\n")
+
+            grade_jsonl(tmp, output_dir, new_registry)
+        else:
+            # no tools filter -> grade everything
+            # re-use the original submission file
+            grade_jsonl(submission, output_dir, new_registry)
+
     if args.command == "grade-sample":
         new_registry = registry.set_data_dir(Path(args.data_dir))
         competition = new_registry.get_competition(args.competition_id)
@@ -201,6 +274,7 @@ def main():
         report = grade_csv(submission, competition)
         logger.info("Competition report:")
         logger.info(json.dumps(report.to_dict(), indent=4))
+
     if args.command == "dev":
         if args.dev_command == "download-leaderboard":
             if args.all:

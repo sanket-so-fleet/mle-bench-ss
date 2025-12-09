@@ -1,7 +1,3 @@
-invasive-species-monitoring
-ml2021spring-hw2
-movie-review-sentiment-analysis-kernels-only
-paddy-disease-classification
 plant-seedlings-classification
-playground-series-s3e18
-spaceship-titanic
+ranzcr-clip-catheter-line-classification	
+dogs-vs-cats-redux-kernels-edition	

@@ -1,0 +1,4 @@
+spooky-author-identification	
+plant-pathology-2020-fgvc7	
+movie-review-sentiment-analysis-kernels-only
+paddy-disease-classification

@@ -120,6 +120,24 @@ class Registry:
 
         return get_module_dir() / "competitions"
 
+    def get_tool_ids(self) -> list[str]:
+        """
+        List all IDs that are tagged as tool-tasks.
+
+        These IDs *refer* to competitions (directories under mlebench/competitions),
+        but this list is conceptually separate from the full competition list.
+        """
+
+        tools_file = self.get_splits_dir() / "tools.txt"
+        if not tools_file.exists():
+            logger.warning("tools.txt not found in splits directory: %s", tools_file)
+            return []
+
+        with tools_file.open("r") as f:
+            tool_ids = [line.strip() for line in f.read().splitlines() if line.strip()]
+
+        return tool_ids
+
     def get_splits_dir(self) -> Path:
         """Retrieves the splits directory within the repository."""
 
@@ -128,7 +146,7 @@ class Registry:
     def get_lite_competition_ids(self) -> list[str]:
         """List all competition IDs for the lite version (low complexity competitions)."""
 
-        lite_competitions_file = self.get_splits_dir() / "low.txt"
+        lite_competitions_file = self.get_splits_dir() / "dev.txt"
         with open(lite_competitions_file, "r") as f:
             competition_ids = f.read().splitlines()
         return competition_ids
