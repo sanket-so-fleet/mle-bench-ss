@@ -5,17 +5,13 @@ from mlebench.utils import get_logger
 
 logger = get_logger(__name__)
 
-def run_tools_for_competition(competition: Competition) -> None:
-    """
-    Dummy hook for tool-tasks.
+# mlebench/tools/runner.py
+from mlebench.utils import get_logger
 
-    For now, this just logs that tools *could* run for this competition.
-    Later, this is where you'd invoke split-checking, metrics tools, etc.
-    """
-    logger.info(f"[TOOLS] Running tool-tasks for competition `{competition.id}`...")
-    # Example of what you'd do later:
-    # from mlebench.tools.split_checker import run_split_analysis
-    # run_split_analysis(competition.public_dir, competition.private_dir)
-    #
-    # For now, it's a no-op beyond logging.
-    return None
+logger = get_logger(__name__)
+
+def run_tools_on_prepare(competition):
+    logger.info(f"[TOOLS] (prepare) would run tools for competition `{competition.id}`")
+
+def run_tools_on_grade(competition_id, submission_entry, registry, output_dir):
+    logger.info(f"[TOOLS] (grade) would run tools for competition `{competition_id}`")

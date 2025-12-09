@@ -5,6 +5,8 @@ from mlebench.data import download_and_prepare_dataset, ensure_leaderboard_exist
 from mlebench.grade import grade_csv, grade_jsonl
 from mlebench.registry import registry
 from mlebench.utils import get_logger, read_jsonl
+from mlebench.runner import run_tools_on_grade, run_tools_on_prepare
+
 
 logger = get_logger(__name__)
 
@@ -102,12 +104,12 @@ def main():
 
     # Grade eval sub-parser
     parser_grade_eval = subparsers.add_parser(
-        "grade",
-        help="Grade a submission to the eval, comprising of several competition submissions",
+    "grade",
+    help="Grade a submission to the eval, comprising of several competition submissions",
     )
     parser_grade_eval.add_argument(
         "--submission",
-        help="Path to the JSONL file of submissions. Refer to README.md#submission-format for the required format.",
+        help="Path to the JSONL file of submissions.",
         type=str,
         required=True,
     )
@@ -123,10 +125,15 @@ def main():
         required=False,
         default=registry.get_data_dir(),
     )
-    # New: tools flag for grade
+    parser_grade_eval.add_argument(
+        "--lite",
+        help="Only grade competitions tagged as lite (low.txt).",
+        action="store_true",
+        required=False,
+    )
     parser_grade_eval.add_argument(
         "--tools",
-        help="Only grade competitions listed in experiments/splits/tools.txt.",
+        help="Also run tool-task grading per competition.",
         action="store_true",
         required=False,
     )
@@ -181,34 +188,27 @@ def main():
     )
 
     args = parser.parse_args()
+    # ----------------- PREPARE -----------------
     if args.command == "prepare":
         new_registry = registry.set_data_dir(Path(args.data_dir))
 
-        # 1. Base competitions
+        # 1) Decide which competitions to prepare (LITE / ALL / LIST / SINGLE)
         if args.lite:
-            base_ids = set(new_registry.get_lite_competition_ids())
+            competition_ids = new_registry.get_lite_competition_ids()
         elif args.all:
-            base_ids = set(registry.list_competition_ids())
+            competition_ids = registry.list_competition_ids()
         elif args.list:
             with open(args.list, "r") as f:
-                base_ids = {line.strip() for line in f if line.strip()}
+                competition_ids = [line.strip() for line in f if line.strip()]
         else:
             if not args.competition_id:
                 parser_prepare.error(
                     "One of --lite, --all, --list, or --competition-id must be specified."
                 )
-            base_ids = {args.competition_id}
+            competition_ids = [args.competition_id]
 
-        # 2. If --tools is set, intersect with tools.txt
-        if getattr(args, "tools", False):
-            tools_ids = set(_load_tools_ids())
-            base_ids = base_ids & tools_ids
-            if not base_ids:
-                parser_prepare.error(
-                    "No competitions in the selected set are marked as tools in tools.txt"
-                )
+        tools_enabled = getattr(args, "tools", False)
 
-        competition_ids = sorted(base_ids)
         competitions = [
             new_registry.get_competition(cid) for cid in competition_ids
         ]
@@ -221,50 +221,54 @@ def main():
                 overwrite_leaderboard=args.overwrite_leaderboard,
                 skip_verification=args.skip_verification,
             )
-        
 
+            # 2) If --tools, run tool behavior FOR THIS COMPETITION.
+            if tools_enabled:
+                run_tools_on_prepare(competition)
+
+        # ----------------- GRADE -----------------
     if args.command == "grade":
         new_registry = registry.set_data_dir(Path(args.data_dir))
         submission = Path(args.submission)
         output_dir = Path(args.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # 1. Load all submissions once
         all_submissions = list(
             read_jsonl(submission, skip_commented_out_lines=True)
         )
 
-        # 2. Base competition_ids = whatever appears in the JSONL
-        base_ids = {
-            s.get("competition_id")
-            for s in all_submissions
-            if s.get("competition_id") is not None
-        }
-
-        # 3. If --tools, intersect with tools.txt
-        if getattr(args, "tools", False):
-            tools_ids = _load_tools_ids()
-            target_ids = base_ids & tools_ids
-            if not target_ids:
-                parser_grade_eval.error(
-                    "No competitions in the submission are marked as tools in tools.txt"
-                )
-            filtered = [
+        # 1) Base: optionally restrict to lite competitions
+        if getattr(args, "lite", False):
+            lite_ids = set(new_registry.get_lite_competition_ids())
+            filtered_submissions = [
                 s for s in all_submissions
-                if s.get("competition_id") in target_ids
+                if s.get("competition_id") in lite_ids
             ]
-
-            # write filtered JSONL and grade that
-            tmp = output_dir / "tools_only_submissions.jsonl"
-            with tmp.open("w") as f:
-                for row in filtered:
-                    f.write(json.dumps(row) + "\n")
-
-            grade_jsonl(tmp, output_dir, new_registry)
         else:
-            # no tools filter -> grade everything
-            # re-use the original submission file
-            grade_jsonl(submission, output_dir, new_registry)
+            filtered_submissions = all_submissions
+
+        # Write filtered JSONL (so grade_jsonl can consume it)
+        tmp = output_dir / "filtered_submissions.jsonl"
+        with tmp.open("w") as f:
+            for row in filtered_submissions:
+                f.write(json.dumps(row) + "\n")
+
+        # 2) Run standard grading on filtered competitions
+        from mlebench.grade import grade_jsonl
+        grade_jsonl(tmp, output_dir, new_registry)
+
+        # 3) If --tools, run tool-grade hooks per competition
+        if getattr(args, "tools", False):
+            for entry in filtered_submissions:
+                cid = entry.get("competition_id")
+                if cid is None:
+                    continue
+                run_tools_on_grade(
+                    competition_id=cid,
+                    submission_entry=entry,
+                    registry=new_registry,
+                    output_dir=output_dir,
+                )
 
     if args.command == "grade-sample":
         new_registry = registry.set_data_dir(Path(args.data_dir))

@@ -1,3 +1,3 @@
-plant-seedlings-classification
-ranzcr-clip-catheter-line-classification	
-dogs-vs-cats-redux-kernels-edition	
+random-acts-of-pizza
+spooky-author-identification
+dogs-vs-cats-redux-kernels-edition
