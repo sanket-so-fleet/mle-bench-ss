@@ -94,6 +94,26 @@ run_id = client.run(
 **Available tasks:** `imbalance`, `missing`, `encoding`, `cv`, `scaling`, `leakage`
 
 ---
+## AIDE Model Steps
+
+- **Dev image (`aide/dev`)**: The demo uses `aide/dev`, which is configured to run with `agent.steps: 1` (fast, developer-friendly). This keeps runs quick for demos.
+
+- **Change number of steps**: Edit `agents/aide/config.yaml` and adjust the `agent.steps` value under the agent `kwargs` you want to run (for example change `1` → `8` or `500`).
+-
+- **Rebuild the agent image**:
+
+    ```bash
+    cd agents/aide
+    docker build -t aide/dev .
+    ```
+
+    **Warning:** building the agent image is slow — expect it to take many minutes and consume multiple gigabytes of disk and network bandwidth. If you want to avoid the long build, use the prebuilt `aide/dev` image (if available) or run the lightweight demo settings.
+
+    Then re-tag and push the image if you use a registry, and restart the demo server.
+
+- **Alternate model**: To try an older agent preconfigured with more internal search steps, set `agent_id="aide/gpt-4-turbo-dev"` in the notebook — that agent is typically configured to use 8 steps.
+
+---
 
 ## SDK Reference
 
