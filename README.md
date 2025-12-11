@@ -1,6 +1,6 @@
 # MLE BENCH REDUX
 
-### See "MLE-Bench Redux.md" for detailed write up.
+### See "writeup_MLE-Bench Redux.md" for detailed write up.
 
 ### See "MLE_BENCH_README.md" for original repo's readme.
 ---

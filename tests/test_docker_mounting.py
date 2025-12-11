@@ -71,11 +71,13 @@ def test_single_competition_mount():
     print(f"  Testing with competition: {prepared}")
     
     # Mount single competition to /home/data (traditional)
+    # Use --entrypoint to bypass the grading server which blocks forever
     cmd = [
         "docker", "run", "--rm",
+        "--entrypoint", "/bin/bash",
         "-v", f"{public_dir}:/home/data:ro",
         "mlebench-env",
-        "ls", "-la", "/home/data"
+        "-c", "ls -la /home/data"
     ]
     
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -98,11 +100,13 @@ def test_all_competitions_mount():
         return True  # Skip
     
     # Mount entire data_dir to /data/
+    # Use --entrypoint to bypass the grading server which blocks forever
     cmd = [
         "docker", "run", "--rm",
+        "--entrypoint", "/bin/bash",
         "-v", f"{data_dir}:/data:ro",
         "mlebench-env",
-        "sh", "-c", "ls /data | head -10"
+        "-c", "ls /data | head -10"
     ]
     
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -150,11 +154,13 @@ for comp_id in os.listdir(data_dir)[:3]:  # Check first 3
 print(json.dumps(results, indent=2))
 '''
     
+    # Use --entrypoint to bypass the grading server which blocks forever
     cmd = [
         "docker", "run", "--rm",
+        "--entrypoint", "/bin/bash",
         "-v", f"{data_dir}:/data:ro",
         "mlebench-env",
-        "python", "-c", script
+        "-c", f"python -c '{script}'"
     ]
     
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -207,12 +213,14 @@ for c in comps:
     print(f"  {c}: {'exists' if exists else 'NOT FOUND'}")
 '''
     
+    # Use --entrypoint to bypass the grading server which blocks forever
     cmd = [
         "docker", "run", "--rm",
+        "--entrypoint", "/bin/bash",
         "-v", f"{data_dir}:/data:ro",
         "-e", f"COMPETITIONS={competitions_str}",
         "mlebench-env",
-        "python", "-c", script
+        "-c", f"python -c '{script}'"
     ]
     
     result = subprocess.run(cmd, capture_output=True, text=True)
