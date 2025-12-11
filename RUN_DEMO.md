@@ -7,19 +7,37 @@ Run AI agents on Kaggle competitions or ML skill assessments.
 ## Quick Start
 
 ```bash
-# 1. Set up environment
-./setup.sh
-
-# 2. Add your OpenAI API key to .env
+# 1. Add your OpenAI API key to .env
 echo "OPENAI_API_KEY=sk-your-key" > .env
 
-# 3. Start the server
-python server.py
+# 2. Set up environment
+./setup.sh
+
+# 3. Start the server separately (see the section below)
+#    Start the server in a separate terminal after activating the environment:
+#    python server.py
 
 # 4. Open demo.ipynb in VS Code or Jupyter
 ```
 
 ---
+
+## Start the server 
+
+Start the FastAPI demo server in a separate terminal after activating the environment. The `setup.sh` script does not start the server automatically.
+
+- Activate your environment:
+    - If using Conda: `conda activate mlebench-env`
+    - If using venv: `source .venv/bin/activate`
+- Start the server:
+
+```
+python server.py
+```
+
+Keep the server terminal running while you open and run `demo.ipynb`.
+
+
 
 ## Prerequisites
 
