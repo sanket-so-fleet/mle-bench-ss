@@ -1,0 +1,16 @@
+id: baseline
+name: Baseline Model Implementation
+task_type: technique-task
+description: mlebench/tool_tasks/baseline/description.md
+
+outputs:
+  code_file: baseline.py
+  readme_file: README.md
+  results_file: baseline_results.json
+
+grading:
+  required:
+    - baseline.py exists
+    - uses cross-validation
+    - prints metrics
+    - README has run instructions

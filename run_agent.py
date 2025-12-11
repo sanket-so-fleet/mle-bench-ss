@@ -9,6 +9,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
+load_dotenv()
+
+# Auto-detect Colima Docker socket if DOCKER_HOST not set
+if not os.environ.get("DOCKER_HOST"):
+    colima_socket = Path.home() / ".colima" / "default" / "docker.sock"
+    if colima_socket.exists():
+        os.environ["DOCKER_HOST"] = f"unix://{colima_socket}"
+
 import docker
 
 from agents.registry import Agent
@@ -32,6 +41,7 @@ class Task:
     agent: Agent
     competition: Competition
     container_config: dict[str, Any]
+    technique_task: str = None
 
 
 async def worker(
@@ -68,6 +78,7 @@ async def worker(
                 retain_container=args.retain,
                 run_dir=task.path_to_run,
                 logger=run_logger,
+                technique_task=task.technique_task,
             )
             task_output["success"] = True
 
@@ -136,6 +147,7 @@ async def main(args):
                 path_to_run_group=run_dir.parent,
                 path_to_run=run_dir,
                 container_config=container_config,
+                technique_task=args.technique_task,
             )
             tasks.append(task)
 
@@ -229,6 +241,13 @@ if __name__ == "__main__":
         type=str,
         required=False,
         default=registry.get_data_dir(),
+    )
+    parser.add_argument(
+        "--technique-task",
+        help="Run a specific technique-task instead of the full competition. Value should be task name like 'imbalance', 'missing', etc.",
+        type=str,
+        required=False,
+        default=None,
     )
     args = parser.parse_args()
     logger = get_logger(__name__)

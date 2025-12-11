@@ -13,7 +13,6 @@ defaults: &defaults
 kwargs_common: &kwargs_common
   agent.search.max_debug_depth: 20 # debug down a branch for up to 20 steps
   agent.search.debug_prob: 1 # always debug when there's something to debug
-  agent.time_limit: *time_limit
   exec.timeout: 32400 # 9 hours limit _per step_, to match max of kaggle.com
   copy_data: False # use symbolic links
 
@@ -34,7 +33,7 @@ aide/dev:
     <<: *kwargs_common
     agent.code.model: gpt-4o-2024-08-06
     agent.feedback.model: gpt-4o-2024-08-06
-    agent.steps: 8
+    agent.steps: 1
   env_vars:
     <<: *env_vars
     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

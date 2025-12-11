@@ -1,16 +1,16 @@
 FROM mlebench-env
 
 # where to put submission.csv, will be extracted
-ARG SUBMISSION_DIR
+ARG SUBMISSION_DIR=/home/submission
 ENV SUBMISSION_DIR=${SUBMISSION_DIR}
 # where to put any logs, will be extracted
-ARG LOGS_DIR
+ARG LOGS_DIR=/home/logs
 ENV LOGS_DIR=${LOGS_DIR}
 # where to put any code, will be extracted
-ARG CODE_DIR
+ARG CODE_DIR=/home/code
 ENV CODE_DIR=${CODE_DIR}
 # where to put any other agent-specific files, will not be necessarily extracted
-ARG AGENT_DIR
+ARG AGENT_DIR=/home/agent
 ENV AGENT_DIR=${AGENT_DIR}
 
 RUN mkdir -p ${LOGS_DIR} ${CODE_DIR} ${AGENT_DIR}

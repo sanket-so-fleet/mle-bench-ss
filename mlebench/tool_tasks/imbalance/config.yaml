@@ -1,0 +1,23 @@
+id: imbalance
+name: Class Imbalance Handling
+task_type: technique-task
+description: mlebench/tool_tasks/imbalance/description.md
+
+outputs:
+  analysis_file: imbalance_analysis.json
+  code_file: balance.py  # optional
+
+grading:
+  required_fields:
+    - class_distribution
+    - imbalance_ratio
+    - is_imbalanced
+    - chosen_strategy
+    - reasoning
+  strategies:
+    - none           # Not imbalanced
+    - class_weights  # Adjust loss function
+    - oversample     # SMOTE, random oversample
+    - undersample    # Random undersample
+    - threshold      # Adjust decision threshold
+    - combined       # Multiple strategies

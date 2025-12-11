@@ -1,1 +1,15 @@
-UTIL-train-val-split
+# Technique Tasks (Tool Tasks)
+# Each task tests a specific ML primitive skill
+
+# Data Quality & Validation
+cv
+leakage
+missing
+imbalance
+scaling
+encoding
+
+# Workflow & Process
+eda
+baseline
+evaluation

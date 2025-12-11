@@ -1,0 +1,21 @@
+id: encoding
+name: Categorical Encoding Choices
+task_type: technique-task
+description: mlebench/tool_tasks/encoding/description.md
+
+outputs:
+  analysis_file: encoding_analysis.json
+  code_file: encode.py  # optional
+
+grading:
+  required_fields:
+    - categorical_columns
+    - encoding_choices
+    - reasoning
+  methods:
+    - onehot          # One-hot encoding
+    - label           # Label encoding (ordinal)
+    - target          # Target encoding (mean of target)
+    - frequency       # Frequency encoding
+    - binary          # Binary encoding
+    - leave_one_out   # LOO target encoding

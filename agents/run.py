@@ -93,6 +93,7 @@ def run_in_container(
     retain_container: bool,
     run_dir: Path,
     logger: logging.Logger,
+    technique_task: str = None,
 ) -> Path:
     """
     Runs environment containing the competition and agent for a set maximum amount of time.
@@ -106,6 +107,7 @@ def run_in_container(
         retain_container: Whether to retain the container after the run instead of removing it.
         run_dir: Path to the directory where all assets associated with the run are stored.
         logger: Logger for the run.
+        technique_task: If set, run this technique-task instead of the full competition.
 
     Returns:
         Path to the output file.
@@ -120,16 +122,29 @@ def run_in_container(
             "mode": "ro",
         },
     }
+    
+    # If technique-task is set, mount the task's description as an override
+    env_vars = {
+        "COMPETITION_ID": competition.id,
+        **agent.env_vars,
+    }
+    if technique_task:
+        env_vars["TECHNIQUE_TASK"] = technique_task
+        # Mount technique-task description.md to a separate path (can't overlay inside mounted dir)
+        tool_tasks_dir = Path(__file__).parent.parent / "mlebench" / "tool_tasks"
+        task_description = tool_tasks_dir / technique_task / "description.md"
+        if task_description.exists():
+            volumes_config[task_description.resolve().as_posix()] = {
+                "bind": "/home/technique_description.md",
+                "mode": "ro",
+            }
 
     container = create_competition_container(
         client=client,
         competition=competition,
         container_config=container_config,
         volumes_config=volumes_config,
-        env_vars={
-            "COMPETITION_ID": competition.id,
-            **agent.env_vars,
-        },
+        env_vars=env_vars,
         container_image=image,
         privileged=agent.privileged,
     )

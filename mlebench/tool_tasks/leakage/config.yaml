@@ -1,0 +1,15 @@
+id: leakage
+name: Data Leakage Detection
+task_type: technique-task
+description: mlebench/tool_tasks/leakage/description.md
+
+outputs:
+  analysis_file: leakage_analysis.json
+  code_file: clean_features.py  # optional
+
+grading:
+  required_fields:
+    - features_analyzed
+    - leaky_features
+    - reasoning_per_feature
+    - recommended_action

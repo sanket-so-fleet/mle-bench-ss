@@ -1,0 +1,606 @@
+- Your challenge is to reconstruct time series data from images of electrocardiogram (ECG) recordings to enable modern ECG software to process data from analogue machines with methods that address the error modes from the paper “High precision ECG digitization using artificial intelligence” in the Journal of Electrocardiology. Use the synthetic augmentation techniques from “An Open-Source Python Framework and Synthetic ECG Image Datasets for Digitization, Lead and Lead Name Detection, and Overlapping Signal Segmentation”
+
+Given an ECG image located at `train/[id]/[id]-[segment].png` or `test/[id].png` and its metadata from `train.csv`or `test.csv` (including sampling frequency `fs`, expected sequence length, lead name, and number of rows), reconstruct the underlying 12-lead ECG time-series that corresponds to the image. Use the raw time-series in `train/[id]/[id].csv`during training as ground truth (columns: I, II, III, aVR, aVL, aVF, V1–V6). Your job is to interpret the printed ECG layout, identify each lead region, infer pixel-to-time and pixel-to-voltage scales, and extract clean waveforms despite distortions from printing, scanning, or photography (rotation, warp, blur, lighting, aspect ratio shifts). For each base_id in the test set, output calibrated millivolt predictions for all required leads and row indices in the exact submission format `{base_id}_{row_id}_{lead}`. The reconstructed signals must be precise enough to maximize the modified SNR metric after automatic alignment that corrects small horizontal and vertical offsets.
+
+Submit with a `sample_submission.parquet` in the root with format:
+- id: composite id with base id, row_id, and lead in `{base_id}_{row_id}_{lead}` 
+- value: lead measurement in mV
+- Turn a product brief into an ML spec. You are given a short product doc describing “predict which users will churn in the next 30 days”. Produce a 1-page markdown spec with prediction target definition, prediction horizon, candidate input tables/columns (from provided schema), primary metric (e.g., AUC) + secondary (precision@k, recall@k), and constraints: max latency, max model size, retrain cadence.
+- Do a quick EDA notebook for a labeled dataset. Given a `train.csv` with features + label column, produce a Jupyter notebook that loads data, shows basic stats & missingness, plots label distribution and 3–5 key feature histograms, and highlights potential issues (e.g., severe imbalance, constant columns).
+- Add simple but strong features for tabular task. You’re given a baseline model script using raw numeric/categorical features. Make code changes that add basic aggregations (e.g., counts, means per user), simple interactions (e.g., feature A / feature B), and a small experiment section in notebook comparing baseline vs new features (metric table).
+- Given a tabular classification dataset, implement a solid baseline model by creating a [`baseline.py`](http://baseline.py) that loads data, trains a logistic regression or tree model with cross-validation, prints main metrics on validation set, and creates a quick README snippet explaining how to run it.
+- Given a single long [`train.py`](http://train.py) with many hard-coded constants, refactor ad-hoc training script into configurable loop. You need to produce `config.yaml` (learning rate, batch size, model type, paths, etc.) and new `train.py` that reads config, logs metrics per epoch, saves checkpoints to /checkpoints, and keeps behavior equivalent to original when using default config.
+- Add proper evaluation metrics & plot: You have a script that only prints training loss. You have to output a new evaluation function that computes accuracy, AUC (for binary), and confusion matrix, saves ROC/PR curves to disk and small markdown report summarizing results from latest run.
+- You are given predictions from `model_A` and `model_B` on the same validation set. Produce a notebook that loads both prediction files, computes core metrics for each, shows where models disagree and give conclusion which model to ship given metric priorities.
+
+
+Yeah, for a local demo, you basically want:
+	•	a local “benchmark server” (could be a containerized FastAPI app), and
+	•	a tiny Python “SDK” module that talks to that server.
+
+You do not need to go full PyPI-package-with-versioning; a lightweight module in the repo is enough to sell the idea.
+
+Let’s keep this very grounded and demo-ready.
+
+⸻
+
+1. Local demo shape
+
+For the demo, you want to be able to do this on your laptop:
+	1.	In Terminal A:
+
+docker build -t fleet-mle-server -f Dockerfile.server .
+docker run --rm -p 8000:8000 \
+  -v $(pwd)/runs:/app/runs \
+  -v $HOME/.kaggle:/root/.kaggle:ro \
+  fleet-mle-server
+
+→ This starts a local HTTP server inside a container:
+	•	it can run mlebench prepare
+	•	it can run python run_agent.py ...
+	•	it can run mlebench grade
+	•	it writes everything into ./runs on your host
+
+	2.	In Terminal B (or a notebook / REPL):
+
+from sdk.client import Client
+
+client = Client("http://localhost:8000")
+run_id = client.run_lite_existing_tasks()
+summary = client.get_run_summary(run_id)
+print(summary)
+
+→ This is your toy SDK experience.
+
+No Kubernetes, no sidecar, no extra infra.
+
+⸻
+
+2. Yes, you’ll need a local server
+
+But “server” here is not huge:
+	•	it’s just a small FastAPI (or Flask) app that:
+	•	exposes POST /runs and GET /runs/{run_id}/summary
+	•	internally shell-calls:
+	•	mlebench prepare ...
+	•	python run_agent.py ...
+	•	mlebench grade ...
+
+That can run:
+	•	either directly on the host (for development),
+	•	or inside the container as the entrypoint for fleet-mle-server.
+
+For the local demo, containerized server is nice because:
+	•	you can say “this is the sidecar / benchmark box”
+	•	SDK points at http://localhost:8000
+	•	they see containers + code in a clean story
+
+⸻
+
+3. Should the SDK be a setuptools-style package?
+
+You can do that, but for this trial, I’d recommend:
+
+✅ Keep it light:
+	•	Put it in the repo under sdk/:
+
+sdk/
+  __init__.py
+  client.py
+
+
+	•	Then users can do:
+
+import sys
+sys.path.append(".")
+
+from sdk.client import Client
+
+
+
+Or you can do a tiny pip install -e . using pyproject.toml, but you don’t need to polish it like a production library.
+
+If you REALLY want to wrap it:
+
+You can add a minimal pyproject.toml like:
+
+[project]
+name = "fleet-mle-sdk"
+version = "0.0.1"
+dependencies = ["requests"]
+
+[project.optional-dependencies]
+dev = ["fastapi", "uvicorn"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+And in sdk/__init__.py and sdk/client.py you export Client.
+
+Then:
+
+pip install -e .
+
+and:
+
+from fleet_mle_sdk import Client
+
+But that’s optional polish. For the trial, “module in repo” is absolutely fine.
+
+⸻
+
+4. Minimal concrete plan for you (IDE agent context)
+
+Here’s what I’d implement now, with Copilot’s help:
+
+A. server.py (FastAPI) with two endpoints
+	•	POST /runs:
+	•	body: { competition_set, agent_id, lite }
+	•	does:
+	•	mlebench prepare (with --lite if lite flag)
+	•	python run_agent.py --agent-id ... --competition-set ...
+	•	finds the latest runs/<run-id>
+	•	runs mlebench grade
+	•	returns { run_id, run_dir }
+	•	GET /runs/{run_id}/summary:
+	•	finds runs/{run_id}/eval/
+	•	returns a simple summary (list of files, maybe metrics if you want to parse them)
+
+B. Dockerfile.server
+
+FROM mlebench-env
+
+WORKDIR /app
+COPY . /app
+
+RUN /opt/conda/bin/conda run -n agent pip install fastapi uvicorn requests
+
+EXPOSE 8000
+
+CMD ["/opt/conda/bin/conda", "run", "-n", "agent",
+     "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+
+C. sdk/client.py
+
+import requests
+
+class Client:
+    def __init__(self, base_url: str = "http://localhost:8000"):
+        self.base_url = base_url.rstrip("/")
+
+    def run_lite_existing_tasks(self, competition_set: str = "experiments/splits/low.txt", agent_id: str = "dummy"):
+        payload = {
+            "competition_set": competition_set,
+            "agent_id": agent_id,
+            "lite": True,
+        }
+        resp = requests.post(f"{self.base_url}/runs", json=payload)
+        resp.raise_for_status()
+        return resp.json()["run_id"]
+
+    def get_run_summary(self, run_id: str):
+        resp = requests.get(f"{self.base_url}/runs/{run_id}/summary")
+        resp.raise_for_status()
+        return resp.json()
+
+That is more than enough for the demo and clearly maps to:
+	•	“isolated MLE-bench in container”
+	•	“little Python SDK”
+	•	“local server”
+
+⸻
+
+5. In your README, say something like:
+
+Local Hosted Usage (SDK + Container)
+	1.	Build and run the benchmark server:
+
+docker build -t fleet-mle-server -f Dockerfile.server .
+docker run --rm -p 8000:8000 \
+  -v $(pwd)/runs:/app/runs \
+  -v $HOME/.kaggle:/root/.kaggle:ro \
+  fleet-mle-server
+
+
+	2.	Use the Python SDK:
+
+from sdk.client import Client
+client = Client("http://localhost:8000")
+run_id = client.run_lite_existing_tasks()
+summary = client.get_run_summary(run_id)
+print(summary)
+
+
+YES — EXACTLY.
+That’s precisely what the SDK is for.
+
+Let me lock in your mental model so there’s zero ambiguity when you build this:
+
+⸻
+
+🟦 What the developer does with the SDK
+
+The SDK is just a Python wrapper around simple HTTP calls to the local service-container.
+The SDK does not do any MLE-bench logic — it just sends commands to the container and returns run info.
+
+So the developer (or a coding agent, or an LLM agent) will do things like:
+
+from sdk.client import Client
+
+client = Client("http://localhost:8000")
+
+run_id = client.run(
+    competitions="experiments/splits/low.txt",
+    agent_id="dummy",
+    lite=True
+)
+
+summary = client.get_run_summary(run_id)
+print(summary)
+
+That’s the entire interaction model.
+
+The SDK does NOT run MLE-bench directly.
+It specifies args and sends them to the benchmark server.
+The server runs prepare → agent → grade inside the container.
+
+So your SDK is basically:
+	•	A remote control for the benchmark server.
+	•	A way for a developer or agent to say:
+“Hey sidecar, please run these tasks for me and give me back the results.”
+
+⸻
+
+🟣 What the service-container does in response
+
+When SDK calls:
+
+client.run(competitions="experiments/splits/low.txt", agent_id="dummy")
+
+Behind the scenes the server container runs:
+
+1. mlebench prepare
+
+It prepares all datasets for the competitions you requested.
+
+2. python run_agent.py ...
+
+It spins up agent containers (dummy/coding-agent) and generates rollouts in /app/runs.
+
+3. mlebench grade ...
+
+It generates evaluation results inside /app/runs/<run_id>/eval.
+
+4. Returns JSON:
+
+{
+  "run_id": "2025-12-10T03-50-12-UTC_run-group_dummy",
+  "status": "completed"
+}
+
+
+⸻
+
+🟩 SDK Responsibilities (developer-facing)
+
+The SDK should allow things like:
+
+✔ Choose which competitions to run
+
+client.run(competitions="experiments/splits/dev.txt")
+
+✔ Choose which agent to use
+
+client.run(agent_id="coding-agent")
+
+✔ Choose modes (lite/full)
+
+client.run(lite=True)
+
+✔ Retrieve the results
+
+summary = client.get_run_summary(run_id)
+
+✔ Optionally fetch artifacts (if you add endpoints)
+
+client.download_submission(run_id)
+client.download_metrics(run_id)
+
+
+⸻
+
+🟢 Most important: SDK gives the developer a simple interface
+
+Right now MLE-bench is:
+	•	highly CLI-driven
+	•	multi-step (prepare → run → grade)
+	•	container-based
+	•	confusing to use directly
+
+Your SDK turns this into:
+
+Example Python usage
+
+from sdk.client import Client
+
+client = Client("http://localhost:8000")
+
+run_id = client.run(
+    competitions="experiments/splits/low.txt",
+    agent_id="coding-agent",
+    lite=True
+)
+
+summary = client.get_run_summary(run_id)
+print("Metrics:", summary["files"])
+
+This is a developer-friendly interface that:
+	•	abstracts away Docker + mounts + CLI
+	•	abstracts away run directories
+	•	abstracts away grading semantics
+
+⸻
+
+🧠 Analogy
+
+The SDK is a client library.
+The containerized FastAPI app is the benchmark service.
+Together they form the “productized” feel they want:
+	•	Benchmark as a service
+	•	ML tasks as simple Python function calls
+	•	Container isolates state & logic
+
+⸻
+
+🟣 YES: Developers specify tasks/competitions via Python arguments
+
+Not through:
+	•	Docker flags
+	•	CLI calls
+	•	shell scripts
+
+But through:
+
+client.run(competitions=..., agent_id=..., lite=...)
+
+The SDK simply forwards these to the service.
+
+⸻
+
+🧭 High-level API: sdk.client.Client
+
+You want one main entrypoint:
+
+from sdk.client import Client
+
+client = Client(base_url="http://localhost:8000")
+
+Methods to expose:
+	1.	run(...)
+	2.	get_run_summary(run_id)
+	3.	list_runs() (optional, if you want to show discoverability)
+	4.	list_competitions() (optional, future-facing)
+
+Let’s spec each one.
+
+⸻
+
+1️⃣ Client.__init__(...)
+
+class Client:
+    def __init__(self, base_url: str = "http://localhost:8000"):
+        self.base_url = base_url.rstrip("/")
+
+This is just the address of your local benchmark server running inside the container.
+
+⸻
+
+2️⃣ run(...) – the core entrypoint
+
+def run(
+    self,
+    competitions: str = "experiments/splits/low.txt",
+    agent_id: str = "dummy",
+    lite: bool = True,
+) -> str:
+    ...
+
+Semantics:
+	•	competitions: path to a competition-set file in the repo (e.g. experiments/splits/low.txt or experiments/splits/dev.txt).
+	•	agent_id: name of the agent to use (dummy, coding-agent, etc.).
+	•	lite: whether to use --lite mode during prepare and grade.
+
+What it does under the hood:
+	•	Sends a POST to the benchmark server:
+
+POST /runs
+{
+  "competition_set": "experiments/splits/low.txt",
+  "agent_id": "dummy",
+  "lite": true
+}
+
+
+	•	The server:
+	•	runs mlebench prepare ...
+	•	runs python run_agent.py ...
+	•	runs mlebench grade ...
+	•	returns {"run_id": "<run_id>"}
+	•	SDK returns run_id (string) to the caller.
+
+Example usage:
+
+run_id = client.run(
+    competitions="experiments/splits/low.txt",
+    agent_id="dummy",
+    lite=True,
+)
+print("Run ID:", run_id)
+
+
+⸻
+
+3️⃣ get_run_summary(run_id) – basic introspection
+
+def get_run_summary(self, run_id: str) -> dict:
+    ...
+
+Semantics:
+	•	Fetches a basic JSON summary of the run from /runs/{run_id}/summary.
+
+On the server side, you can implement this as:
+	•	Look at runs/{run_id}/eval/
+	•	List evaluation files
+	•	Maybe parse a metrics JSON if you want
+
+Your server returns, e.g.:
+
+{
+  "run_id": "2025-12-09T21-11-58-UTC_run-group_dummy",
+  "eval_dir": "runs/2025-12-09T21-11-58-UTC_run-group_dummy/eval",
+  "files": [
+    "spaceship-titanic_metrics.json",
+    "dogs-vs-cats_metrics.json"
+  ]
+}
+
+SDK just returns this dict.
+
+Example usage:
+
+summary = client.get_run_summary(run_id)
+print(summary["files"])
+
+
+⸻
+
+4️⃣ list_runs() – optional, but nice
+
+def list_runs(self) -> list[dict]:
+    ...
+
+Server can expose:
+
+GET /runs
+
+which returns something like:
+
+[
+  {"run_id": "2025-12-09T20-17-03-UTC_run-group_dummy"},
+  {"run_id": "2025-12-09T21-11-58-UTC_run-group_dummy"}
+]
+
+SDK simply returns that list.
+
+Example usage:
+
+for r in client.list_runs():
+    print(r["run_id"])
+
+
+⸻
+
+5️⃣ list_competitions() – extra credit
+
+If you want to show “here’s how a dev could introspect what’s available,” add:
+
+def list_competitions(self) -> list[str]:
+    ...
+
+Server-side, this can just call into the registry:
+
+GET /competitions
+→ ["spaceship-titanic", "dogs-vs-cats-redux-kernels-edition", ...]
+
+SDK returns the list.
+
+⸻
+
+📦 SDK Implementation (concrete)
+
+Here’s a concrete skeleton for sdk/client.py:
+
+# sdk/client.py
+import requests
+
+class Client:
+    def __init__(self, base_url: str = "http://localhost:8000"):
+        self.base_url = base_url.rstrip("/")
+
+    def run(self, competitions: str = "experiments/splits/low.txt", agent_id: str = "dummy", lite: bool = True) -> str:
+        payload = {
+            "competition_set": competitions,
+            "agent_id": agent_id,
+            "lite": lite,
+        }
+        resp = requests.post(f"{self.base_url}/runs", json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        return data["run_id"]
+
+    def get_run_summary(self, run_id: str) -> dict:
+        resp = requests.get(f"{self.base_url}/runs/{run_id}/summary")
+        resp.raise_for_status()
+        return resp.json()
+
+    def list_runs(self) -> list[dict]:
+        resp = requests.get(f"{self.base_url}/runs")
+        resp.raise_for_status()
+        return resp.json()
+
+    def list_competitions(self) -> list[str]:
+        resp = requests.get(f"{self.base_url}/competitions")
+        resp.raise_for_status()
+        return resp.json()
+
+That’s your SDK.
+It’s small, understandable, and matches the “developer experience” you want.
+
+⸻
+
+🧱 Server endpoints to support this SDK
+
+To make the above work, your server.py (inside the benchmark container) needs endpoints:
+	•	POST /runs → implements prepare → run_agent → grade
+	•	GET /runs → lists existing run IDs (looks at runs/ directory)
+	•	GET /runs/{run_id}/summary → shows summary for one run
+	•	GET /competitions → optional, pulls registry.list_competition_ids() or similar
+
+You can implement these with FastAPI exactly as we outlined earlier.
+
+⸻
+
+🔁 Flow for the local demo
+	1.	Developer starts the benchmark service container:
+
+docker build -t fleet-mle-server -f Dockerfile.server .
+docker run --rm -p 8000:8000 \
+  -v $(pwd)/runs:/app/runs \
+  -v $HOME/.kaggle:/root/.kaggle:ro \
+  fleet-mle-server
+
+	2.	Developer uses the SDK:
+
+from sdk.client import Client
+
+client = Client("http://localhost:8000")
+
+print("Competitions:", client.list_competitions())
+
+run_id = client.run(
+    competitions="experiments/splits/low.txt",
+    agent_id="dummy",
+    lite=True,
+)
+
+print("Run ID:", run_id)
+
+summary = client.get_run_summary(run_id)
+print("Summary:", summary)
+
+That’s the full mini-SDK + local service story in a way that matches what they asked for.
+
+⸻
+
+If you’d like, next I can give you a minimal FastAPI server.py skeleton with these endpoints stubbed out and ready for Copilot to fill in subprocess details.

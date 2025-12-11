@@ -1,0 +1,24 @@
+id: cv
+name: Cross-Validation Strategy Selection
+task_type: technique-task
+description: mlebench/tool_tasks/cv/description.md
+
+# What the agent must produce
+outputs:
+  analysis_file: cv_analysis.json
+  code_file: split.py  # optional - if agent implements a split
+
+# Grading criteria
+grading:
+  required_fields:
+    - data_characteristics
+    - has_temporal_structure
+    - has_groups
+    - recommended_strategy
+    - reasoning
+  strategies:
+    - kfold           # Standard k-fold
+    - stratified      # Stratified k-fold (for imbalanced)
+    - timeseries      # TimeSeriesSplit (for temporal)
+    - group           # GroupKFold (for grouped data)
+    - leave_one_out   # LOO (for small datasets)

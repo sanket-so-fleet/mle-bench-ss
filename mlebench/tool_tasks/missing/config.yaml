@@ -1,0 +1,28 @@
+id: missing
+name: Missing Value Strategy
+task_type: technique-task
+description: mlebench/tool_tasks/missing/description.md
+
+outputs:
+  analysis_file: missing_analysis.json
+  code_file: impute.py  # optional
+
+grading:
+  required_fields:
+    - missing_summary
+    - missingness_pattern
+    - chosen_strategy
+    - reasoning
+  patterns:
+    - MCAR  # Missing Completely At Random
+    - MAR   # Missing At Random
+    - MNAR  # Missing Not At Random
+  strategies:
+    - drop_rows
+    - drop_cols
+    - mean_impute
+    - median_impute
+    - mode_impute
+    - knn_impute
+    - model_impute
+    - indicator_flag

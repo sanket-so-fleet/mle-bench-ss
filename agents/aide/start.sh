@@ -67,7 +67,14 @@ if [ "$OBFUSCATE" = "true" ]; then
   fi
   mv /home/data/description_obfuscated.md /home/data/description.md
 fi
-cat /home/data/description.md >> ${AGENT_DIR}/full_instructions.txt
+
+# If TECHNIQUE_TASK is set, use the technique description instead of competition description
+if [ -n "$TECHNIQUE_TASK" ] && [ -f /home/technique_description.md ]; then
+  echo "Using technique-task description for: $TECHNIQUE_TASK"
+  cat /home/technique_description.md >> ${AGENT_DIR}/full_instructions.txt
+else
+  cat /home/data/description.md >> ${AGENT_DIR}/full_instructions.txt
+fi
 
 # symbolic linking
 # agent will write to AGENT_DIR/workspaces/exp/ and AGENT_DIR/logs/exp

@@ -1,0 +1,27 @@
+# Minimal requirements for tabular + NLP demo (no heavy vision deps)
+# Note: we install `aideml` with --no-deps in the Dockerfile and then install
+# these minimal runtime libraries so the agent code can run basic tasks.
+
+pandas
+numpy
+scikit-learn
+matplotlib
+openai
+nltk
+humanize==4.8.0
+jsonschema==4.19.2
+omegaconf>=2.3.0
+dataclasses_json>=0.6.4
+coolname>=2.2.0
+loguru==0.7.2
+rich==13.7.0
+python-dotenv
+PyYAML
+requests>=2.32.4
+backoff
+funcy==2.0
+shutup>=0.2.0
+anthropic>=0.20.0
+
+# Add more lightweight NLP tools if needed
+

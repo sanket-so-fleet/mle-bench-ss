@@ -1,1 +1,27 @@
-git+https://github.com/thesofakillers/aideml@v6.3.3
+# Original (git) requirement; kept for reference:
+# git+https://github.com/thesofakillers/aideml@v6.3.3
+# Previous PyPI pin (kept commented):
+# aideml>=0.2.2
+
+# Minimal, pragmatic requirements for dev tasks (tabular / NLP / basic vision)
+aideml>=0.2.2
+pandas
+numpy
+scikit-learn
+matplotlib
+openai
+
+# NLP lightweight
+nltk
+
+# Vision basics
+opencv-python
+pillow
+
+# Lightweight deep learning for vision tasks (CPU-only)
+torch
+torchvision
+
+# NOTE: heavy frameworks like transformers, fastai, tensorflow, lightgbm,
+# and other large ML packages are intentionally excluded here. Add them
+# per-competition if AIDE's generated solutions require them.

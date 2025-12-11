@@ -1,0 +1,18 @@
+id: eda
+name: Exploratory Data Analysis Notebook
+task_type: technique-task
+description: mlebench/tool_tasks/eda/description.md
+
+outputs:
+  notebook_file: eda.ipynb
+  analysis_file: eda_analysis.json
+  plots_dir: plots/
+
+grading:
+  required_sections:
+    - data_loading
+    - basic_stats
+    - missing_analysis
+    - label_distribution
+    - feature_plots
+    - issues_identified

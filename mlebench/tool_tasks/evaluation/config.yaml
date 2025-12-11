@@ -1,0 +1,17 @@
+id: evaluation
+name: Evaluation Metrics & Plots
+task_type: technique-task
+description: mlebench/tool_tasks/evaluation/description.md
+
+outputs:
+  code_file: evaluate.py
+  report_file: report.md
+  plots_dir: plots/
+  results_file: evaluation_results.json
+
+grading:
+  required:
+    - evaluate.py exists
+    - computes multiple metrics
+    - saves plots
+    - report.md summarizes results

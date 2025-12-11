@@ -1,0 +1,21 @@
+id: scaling
+name: Feature Scaling Decisions
+task_type: technique-task
+description: mlebench/tool_tasks/scaling/description.md
+
+outputs:
+  analysis_file: scaling_analysis.json
+  code_file: scale.py  # optional
+
+grading:
+  required_fields:
+    - model_type
+    - needs_scaling
+    - chosen_method
+    - reasoning
+  methods:
+    - none            # Tree-based models
+    - standard        # StandardScaler (mean=0, std=1)
+    - minmax          # MinMaxScaler [0,1]
+    - robust          # RobustScaler (median, IQR)
+    - normalizer      # L2 normalize rows
