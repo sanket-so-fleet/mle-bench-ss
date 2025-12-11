@@ -264,7 +264,8 @@ if command -v conda &> /dev/null; then
 else
     echo "  1. Activate environment:  ${BLUE}source .venv/bin/activate${NC}"
 fi
-echo "  2. Start the server:      ${BLUE}python server.py${NC}"
-echo "  3. Open demo.ipynb in VS Code or Jupyter"
+echo "  2. Open demo.ipynb in VS Code or Jupyter"
+echo ""
+echo "Note: The server must be started separately in its own terminal. See RUN_DEMO.md for instructions."
 echo ""
 echo "Happy experimenting! 🚀"
