@@ -142,18 +142,22 @@ print_success "Dependencies installed"
 # -----------------------------------------------------------------------------
 # 5. Pull Docker images
 # -----------------------------------------------------------------------------
-print_step "Pulling Docker images (this may take a few minutes)..."
+print_step "Pulling Docker images..."
+echo ""
+echo -e "    ${YELLOW}⚠ First-time download is ~12GB per image and may take 10-30 minutes.${NC}"
+echo -e "    ${YELLOW}  Go grab a coffee ☕${NC}"
+echo ""
 
 # Check if images exist locally first
 if docker images | grep -q "mlebench-env"; then
     print_warning "mlebench-env image already exists locally"
 else
     # Try to pull from registry, fall back to local build
-    if docker pull ghcr.io/sanket-so-fleet/mlebench-env:latest 2>/dev/null; then
-        docker tag ghcr.io/sanket-so-fleet/mlebench-env:latest mlebench-env
+    if docker pull ghcr.io/sanket-so-fleet/mle-bench-ss/mlebench-env:latest 2>/dev/null; then
+        docker tag ghcr.io/sanket-so-fleet/mle-bench-ss/mlebench-env:latest mlebench-env
         print_success "Pulled mlebench-env from registry"
     else
-        print_warning "Could not pull from registry. Building locally..."
+        print_warning "Could not pull from registry. Building locally (this takes even longer)..."
         docker build -t mlebench-env -f environment/Dockerfile environment/
         print_success "Built mlebench-env locally"
     fi
@@ -163,11 +167,11 @@ if docker images | grep -q "^aide "; then
     print_warning "aide image already exists locally"
 else
     # Try to pull from registry, fall back to local build
-    if docker pull ghcr.io/sanket-so-fleet/aide:latest 2>/dev/null; then
-        docker tag ghcr.io/sanket-so-fleet/aide:latest aide
+    if docker pull ghcr.io/sanket-so-fleet/mle-bench-ss/aide:latest 2>/dev/null; then
+        docker tag ghcr.io/sanket-so-fleet/mle-bench-ss/aide:latest aide
         print_success "Pulled aide from registry"
     else
-        print_warning "Could not pull from registry. Building locally..."
+        print_warning "Could not pull from registry. Building locally (this takes even longer)..."
         docker build -t aide -f agents/aide/Dockerfile agents/aide/
         print_success "Built aide locally"
     fi
