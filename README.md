@@ -23,7 +23,7 @@ echo "OPENAI_API_KEY=sk-your-key" > .env
 
 ---
 
-## Start the server 
+## Start the server and run demo notebook!
 
 Start the FastAPI demo server in a separate terminal after activating the environment. The `setup.sh` script does not start the server automatically.
 
