@@ -1,8 +1,8 @@
 # MLE BENCH REDUX
 
-## See "MLE-Bench Redux.md" or "MLE-Bench Redux.pdf" for detailed write up.
+### See "MLE-Bench Redux.md" for detailed write up.
 
-## See "MLE_BENCH_README.md" for original repo's readme.
+### See "MLE_BENCH_README.md" for original repo's readme.
 ---
 
 ## Quick Start
