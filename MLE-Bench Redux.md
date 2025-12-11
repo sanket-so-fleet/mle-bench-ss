@@ -1,6 +1,6 @@
 MLE-Bench Redux
 
-This project aims to understand and expand the MLE-Bench framework in the light of Fleet’s customer’s demands and ongoing production goals and challenges. This writeup is a supplement to the DEMO\_README.md file that has more detail on building and using the repo. 
+This project aims to understand and expand the MLE-Bench framework in the light of Fleet’s customer’s demands and ongoing production goals and challenges. This writeup is a supplement to the README.md file that has more detail on building and using the repo. 
 
 **Summary of original MLE-Bench findings and results**
 
@@ -16,7 +16,7 @@ On the systems engineering side, a teammate and I had briefly discussed the inte
 
 ***Machine Learning strokes*** 
 
-On the machine learning side, I specifically responded to the ‘improving on kaggle competition tasks’ phrase in the prompt. Reading the original MLE-Bench paper, it clearly states that the models had trouble debugging and backtracking in many instances. Also if you look at the results, there is a lot of variance in the results with little clear rhyme or reason. What was also an interesting note from the paper was that there was no correlation between the model ‘already having seeing the answer’ and getting it right\! Though it’s important to note that these are now-obsolete models and modern ones will definitely perform better. However, even still, this clearly indicates the limits to our understanding of these models. 
+On the machine learning side, I specifically responded to the ‘improving on kaggle competition tasks’ phrase in the prompt. Reading the original [MLE-Bench paper](https://arxiv.org/pdf/2410.07095), it clearly states that the models had trouble debugging and backtracking in many instances. Also if you look at the results, there is a lot of variance in the results with little clear rhyme or reason. What was also an interesting note from the paper was that there was no correlation between the model ‘already having seeing the answer’ and getting it right\! Though it’s important to note that these are now-obsolete models and modern ones will definitely perform better. However, even still, this clearly indicates the limits to our understanding of these models. 
 
 *“More data” and “bigger models” may not be enough.*
 
