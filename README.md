@@ -1,6 +1,6 @@
-# Demo Guide
+# MLE BENCH REDUX
 
-Run AI agents on Kaggle competitions or ML skill assessments.
+## See "MLE-Bench Redux.md" or "MLE-Bench Redux.pdf" for detailed write up.
 
 ---
 
