@@ -6,11 +6,11 @@
 
 ---
 
-This project aims to understand and expand the MLE-Bench framework in light of Fleet's customer demands and ongoing production goals. This writeup supplements the README.md with more detail on the reasoning and design.
+This project aims to understand and expand the MLE-Bench framework in light of Fleet's customer demands and ongoing production goals. This writeup details on the reasoning and design.
 
 **Summary of original MLE-Bench findings and results**
 
-MLE-Bench runs containerized agent-environments to complete 50 different Kaggle competitions and produce a leaderboard of scores. Though the results are on now-obsolete models, they hint at both the potential and problems with MLE agents. My shift in perspective is to push this MLE-bench from a fixed evaluation framework to something more sand-boxy, that can be leveraged for actually improving agent performance. Rather than a leaderboard, this version delivered the produced rollouts and also adds a different categorical dimension of tasks, called technique-tasks. 
+MLE-Bench runs containerized agent-environments to complete 50 different Kaggle competitions and produce a leaderboard of scores. Though the results are on now-obsolete models, they hint at both the potential and problems with MLE agents. My shift in perspective is to push this MLE-bench from a fixed evaluation framework to something more sand-boxy, that can be leveraged for actually improving agent performance. Rather than a leaderboard, this version delivered the produced rollouts and also adds a different category of tasks, called technique-tasks. 
 
 **Conceptual Broad Strokes**
 

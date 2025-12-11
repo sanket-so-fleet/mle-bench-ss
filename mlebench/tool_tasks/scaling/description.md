@@ -31,7 +31,7 @@ Determine if and how to scale features based on model type and data characterist
    - `robust` - RobustScaler: when outliers present
    - `normalizer` - When you care about direction, not magnitude
 
-5. **Write your analysis** to `scaling_analysis.json`:
+5. **Write your analysis to `/home/submission/scaling_analysis.json`:
 
 ```json
 {

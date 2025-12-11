@@ -43,7 +43,7 @@ train = pd.read_csv('/home/data/train.csv')
 
 2. **Save plots** to `plots/` directory
 
-3. **Write summary** to `eda_analysis.json`:
+3. **Write summary to `/home/submission/eda_analysis.json`:
 
 ```json
 {

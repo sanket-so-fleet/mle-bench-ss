@@ -30,7 +30,7 @@ Analyze missing data patterns and choose an appropriate imputation strategy.
    | `model_impute` | MAR, complex relationships |
    | `indicator_flag` | MNAR, missingness itself is informative |
 
-5. **Write your analysis** to `missing_analysis.json`:
+5. **Write your analysis to `/home/submission/missing_analysis.json`:
 
 ```json
 {

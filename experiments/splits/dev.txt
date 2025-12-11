@@ -1,3 +1,2 @@
 random-acts-of-pizza
 spooky-author-identification
-dogs-vs-cats-redux-kernels-edition

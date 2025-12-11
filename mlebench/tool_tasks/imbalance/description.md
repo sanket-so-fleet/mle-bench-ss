@@ -29,7 +29,7 @@ Analyze class distribution and determine if/how to handle class imbalance.
    - `threshold` - Adjust classification threshold
    - `combined` - Multiple strategies together
 
-5. **Write your analysis** to `imbalance_analysis.json`:
+5. **Write your analysis** to `/home/submission/imbalance_analysis.json`:
 
 ```json
 {

@@ -28,14 +28,13 @@ class Client:
         retain: bool = False,
         data_dir: Optional[str] = None,
         notes: Optional[str] = None,
-        technique_tasks: bool = False,
         tasks: Optional[List[str]] = None,
     ) -> str:
         """Trigger a new run and return the run_id.
         
         Args:
-            technique_tasks: If True, run technique-tasks instead of regular competition.
-            tasks: Which technique-tasks to run (default: all). Only used if technique_tasks=True.
+            tasks: Technique-tasks to run (e.g., ['imbalance', 'missing']).
+                   If provided, runs technique-task mode instead of competition mode.
         """
         payload: Dict[str, Any] = {
             "competition_set": competition_set,
@@ -44,7 +43,6 @@ class Client:
             "n_seeds": n_seeds,
             "n_workers": n_workers,
             "retain": retain,
-            "technique_tasks": technique_tasks,
         }
         if data_dir:
             payload["data_dir"] = data_dir

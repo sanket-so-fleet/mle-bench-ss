@@ -21,7 +21,7 @@ Analyze the dataset to identify features that may leak information about the tar
    - ID-like features that encode target information
    - Aggregated features that include target in calculation
 
-4. **Write your analysis** to `leakage_analysis.json`:
+4. **Write your analysis to `/home/submission/leakage_analysis.json`:
 
 ```json
 {

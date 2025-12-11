@@ -30,7 +30,7 @@ Analyze categorical features and choose appropriate encoding methods.
    - Target encoding must be done with CV to prevent leakage
    - Fit encoder on train only
 
-6. **Write your analysis** to `encoding_analysis.json`:
+6. **Write your analysis to `/home/submission/encoding_analysis.json`:
 
 ```json
 {

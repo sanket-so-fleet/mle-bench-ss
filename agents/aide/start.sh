@@ -49,7 +49,10 @@ cp /home/instructions.txt ${AGENT_DIR}/full_instructions.txt
 # Update instructions for agent-specific details: replace `/home/` paths to make paths relative
 # (since the agent will have its own copies of these files in its workspace).
 # e.g. /home/submission/submission.csv -> submission/submission.csv
-sed -i 's|/home/||g' ${AGENT_DIR}/full_instructions.txt
+# BUT: skip this for technique-tasks since they need absolute paths
+if [ -z "$TECHNIQUE_TASK" ]; then
+  sed -i 's|/home/||g' ${AGENT_DIR}/full_instructions.txt
+fi
 # we'll take care of moving things to home/submission/ ourselves
 
 # move on to agent-specific instructions, with a linebreak in between

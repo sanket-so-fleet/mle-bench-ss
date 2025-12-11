@@ -20,7 +20,7 @@ Analyze the dataset and determine the appropriate cross-validation strategy.
    - `group` - GroupKFold when samples from same group must stay together
    - `leave_one_out` - For very small datasets
 
-4. **Write your analysis** to `cv_analysis.json`:
+4. **Write your analysis to `/home/submission/cv_analysis.json`:
 
 ```json
 {

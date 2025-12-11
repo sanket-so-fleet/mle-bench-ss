@@ -57,8 +57,10 @@ class RunRequest(BaseModel):
     data_dir: Optional[str] = Field(None, description="Override data directory.")
     gitlink: Optional[str] = Field(None, description="Git repo link (reserved for future use).")
     notes: Optional[str] = None
-    technique_tasks: bool = Field(False, description="Run technique-tasks instead of regular competition.")
-    tasks: Optional[List[str]] = Field(None, description="Which technique-tasks to run (default: all).")
+    tasks: Optional[List[str]] = Field(
+        None, 
+        description="Technique-tasks to run (e.g., ['imbalance', 'missing']). If provided, runs technique-task mode instead of competition mode."
+    )
 
 
 class RunRecord(BaseModel):
@@ -130,7 +132,8 @@ def _worker(run_id: str, req: RunRequest) -> None:
     try:
         before = {p.name for p in RUNS_DIR.iterdir() if RUNS_DIR.exists() and p.is_dir()}
 
-        if req.technique_tasks:
+        # If tasks provided, run technique-task mode; otherwise regular competition mode
+        if req.tasks:
             # Technique-tasks flow
             _run_technique_tasks(run_id, req, before)
         else:
