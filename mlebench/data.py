@@ -51,6 +51,11 @@ def download_and_prepare_dataset(
         competition.prepare_fn
     ), f"Provided `prepare_fn` doesn't take arguments `raw`, `private` and `public`!"
 
+    # Early exit if dataset is already fully prepared
+    if not overwrite_checksums and is_dataset_prepared(competition):
+        logger.info(f"Dataset for `{competition.id}` is already prepared. Skipping.")
+        return
+
     ensure_leaderboard_exists(competition, force=overwrite_leaderboard)
 
     competition_dir = competition.raw_dir.parent
@@ -58,11 +63,17 @@ def download_and_prepare_dataset(
     competition.raw_dir.mkdir(exist_ok=True, parents=True)
     create_prepared_dir(competition)
 
-    zipfile = download_dataset(
-        competition_id=competition.id,
-        download_dir=competition_dir,
-        force=False,
-    )
+    # Check if zip already exists to avoid unnecessary API calls
+    existing_zips = list(competition_dir.glob("*.zip"))
+    if existing_zips and not overwrite_checksums:
+        zipfile = existing_zips[0]
+        logger.info(f"Using existing zip file: `{zipfile}`")
+    else:
+        zipfile = download_dataset(
+            competition_id=competition.id,
+            download_dir=competition_dir,
+            force=False,
+        )
 
     if overwrite_checksums or not skip_verification:
         logger.info(f"Generating checksum for `{zipfile}`...")

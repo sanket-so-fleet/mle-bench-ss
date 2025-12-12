@@ -18,7 +18,7 @@ echo "OPENAI_API_KEY=sk-your-key" > .env
 #    Start the server in a separate terminal after activating the environment:
 #    python server.py
 
-# 4. Open demo.ipynb in VS Code or Jupyter
+# 4. Open demo.ipynb in VS Code or Jupyter. KNOWN KAGGLE BUG: Sometimes the bulk data download at kaggle returns a error 500....so any runs will fail in that case.
 ```
 
 ---
